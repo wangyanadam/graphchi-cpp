@@ -182,3 +182,4 @@ xcuserdata
 # ...none. Everything is now explained.
 *.cproject
 *.project
+.settings/language.settings.xml
