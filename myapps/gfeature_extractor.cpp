@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
+#include <cstdio>
 
 #include "graphchi_basic_includes.hpp"
 
@@ -446,6 +447,8 @@ public:
 };
 
 int main(int argc, const char ** argv) {
+	_setmaxstdio(50000);
+
 	/* GraphChi initialization will read the command line
 	 arguments and the configuration file. */
 	graphchi_init(argc, argv);
