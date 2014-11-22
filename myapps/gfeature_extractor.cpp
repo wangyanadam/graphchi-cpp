@@ -51,9 +51,14 @@ using std::clog;
 const int NumFeatures = 10;
 
 /*
+ * Number of sampling rounds for computing the neighborhood features.
+ */
+const int NumSampleRounds = 5;
+
+/*
  * Size of the random neighborhood sample.
  */
-const int NumRndNbs = 20;
+const int NumRndNbs = 10;
 
 // Feature value type
 typedef float FValue;
@@ -127,8 +132,8 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 			for (int i = 1; i < NumFeatures; i++) {
 				v.dataptr->fvals[i] = 0;
 			}
-			v.dataptr->fill_fid = 0;
 			v.dataptr->pass_fid = 0;
+			v.dataptr->fill_fid = 4;
 
 			// Init edge data
 			for (int i = 0; i < num_edges; i++) {
@@ -157,64 +162,86 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				}
 			}
 
-		} else if (ginfo.iteration == 1) {
+		} else if (ginfo.iteration <= NumSampleRounds) {
 
+			// Aggregating messages
 			std::set<vid_t> nb_ids;
 			for (int i = 0; i < num_edges; i++) {
 				nb_ids.insert(v.edge(i)->vertexid);
 			}
+			nb_ids.insert(v.vertexid);
 
 			double tri_count = 0;
+			double oedge_count = 0;
 			for (int i = 0; i < num_edges; i++) {
 				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
 
-				int *fid;
 				FValue *fval;
 				vid_t *msg_nbs;
 
 				if (cur_edge->vertexid > v.vertexid) {
-					fid = &(cur_edge->data_ptr->v1_fid);
 					fval = &(cur_edge->data_ptr->v1_fval);
 					msg_nbs = cur_edge->data_ptr->v1_nbs;
 				} else {
-					fid = &(cur_edge->data_ptr->v2_fid);
 					fval = &(cur_edge->data_ptr->v2_fval);
 					msg_nbs = cur_edge->data_ptr->v2_nbs;
 				}
 
 				double in_net_ratio = 0;
+				double out_net_ratio = 0;
 				for (int j = 0; j < NumRndNbs; j++) {
 					if (nb_ids.find(msg_nbs[j]) != nb_ids.end()) {
-						in_net_ratio++;
+						if (msg_nbs[j] != v.vertexid) {
+							in_net_ratio++;
+						}
+					} else {
+						out_net_ratio++;
 					}
 				}
+
 				in_net_ratio = in_net_ratio / NumRndNbs;
 				tri_count += in_net_ratio * (*fval);
+
+				out_net_ratio = out_net_ratio / NumRndNbs;
+				oedge_count += out_net_ratio * (*fval);
 			}
 
-			if (tri_count > 0) {
-				v.dataptr->fvals[1] = tri_count
-						/ (num_edges * (num_edges - 1));
+			// Updating ratio
+			double ur = 1.0 / ginfo.iteration;
+
+			// Updating f1, i.e. clustering coefficient
+			if (num_edges > 1) {
+				v.dataptr->fvals[1] = (1 - ur) * v.dataptr->fvals[1]
+						+ ur * (tri_count / (num_edges * (num_edges - 1)));
 			}
-			v.dataptr->fvals[2] = tri_count / 2;
-			v.dataptr->fill_fid = 2;
 
-		} else if (ginfo.iteration == 2) {
+			// Updating f2, i.e. in-egonet-edge count
+			tri_count = tri_count / 2;
+			v.dataptr->fvals[2] = (1 - ur) * v.dataptr->fvals[2]
+					+ ur * tri_count;
 
+			// Updating f3, i.e. cut ratio
+			if (num_edges + tri_count + oedge_count > 0) {
+				v.dataptr->fvals[3] =
+						(1 - ur) * v.dataptr->fvals[3]
+								+ ur
+										* (oedge_count
+												/ (num_edges + tri_count
+														+ oedge_count));
+			}
+
+			// Updating f4, i.e. outside-edge count
+			v.dataptr->fvals[4] = (1 - ur) * v.dataptr->fvals[4]
+					+ ur * oedge_count;
+
+			// Propagating messages
 			for (int i = 0; i < num_edges; i++) {
 				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
 
-				int *fid;
-				FValue *fval;
 				vid_t *msg_nbs;
-
 				if (cur_edge->vertexid < v.vertexid) {
-					fid = &(cur_edge->data_ptr->v1_fid);
-					fval = &(cur_edge->data_ptr->v1_fval);
 					msg_nbs = cur_edge->data_ptr->v1_nbs;
 				} else {
-					fid = &(cur_edge->data_ptr->v2_fid);
-					fval = &(cur_edge->data_ptr->v2_fval);
 					msg_nbs = cur_edge->data_ptr->v2_nbs;
 				}
 
@@ -224,54 +251,16 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				}
 			}
 
-		} else if (ginfo.iteration == 3) {
+		} else if (ginfo.iteration == NumSampleRounds + 1)  {
 
-			std::set<vid_t> nb_ids;
-			for (int i = 0; i < num_edges; i++) {
-				nb_ids.insert(v.edge(i)->vertexid);
-			}
-			nb_ids.insert(v.vertexid);
-
-			double outside_edge_count = 0;
-			for (int i = 0; i < num_edges; i++) {
-				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
-
-				int *fid;
-				FValue *fval;
-				vid_t *msg_nbs;
-
-				if (cur_edge->vertexid > v.vertexid) {
-					fid = &(cur_edge->data_ptr->v1_fid);
-					fval = &(cur_edge->data_ptr->v1_fval);
-					msg_nbs = cur_edge->data_ptr->v1_nbs;
-				} else {
-					fid = &(cur_edge->data_ptr->v2_fid);
-					fval = &(cur_edge->data_ptr->v2_fval);
-					msg_nbs = cur_edge->data_ptr->v2_nbs;
-				}
-
-				double out_net_ratio = 0;
-				for (int j = 0; j < NumRndNbs; j++) {
-					if (nb_ids.find(msg_nbs[j]) == nb_ids.end()) {
-						out_net_ratio++;
-					}
-				}
-				out_net_ratio = out_net_ratio / NumRndNbs;
-				outside_edge_count += out_net_ratio * (*fval);
-			}
-
-			if (outside_edge_count > 0) {
-				v.dataptr->fvals[3] = outside_edge_count
-						/ (num_edges + v.dataptr->fvals[2]
-								+ outside_edge_count);
-			}
-			v.dataptr->fvals[4] = outside_edge_count;
-			v.dataptr->fill_fid = 4;
+			// Rounding the features: triangle count & out-edge count
+			v.dataptr->fvals[2] = (int) (v.dataptr->fvals[2] + 0.5);
+			v.dataptr->fvals[4] = (int) (v.dataptr->fvals[4] + 0.5);
 
 		} else {
 
 			// Computing recursive features
-			if ((ginfo.iteration % 2) == 0) {
+			if (((ginfo.iteration - NumSampleRounds) % 2) == 0) {
 
 				// Propagating messages
 				for (int i = 0; i < num_edges; i++) {
