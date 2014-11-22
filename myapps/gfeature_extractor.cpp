@@ -53,20 +53,12 @@ const int NumFeatures = 10;
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-<<<<<<< HEAD
 const int NumSampleRounds = 5;
-=======
-const int NumSampleRounds = 5000;
->>>>>>> 25959add2541b6c96f051b02fab942494c59433a
 
 /*
  * Size of the random neighborhood sample.
  */
-<<<<<<< HEAD
 const int NumRndNbs = 10;
-=======
-const int NumRndNbs = 5;
->>>>>>> 25959add2541b6c96f051b02fab942494c59433a
 
 // Feature value type
 typedef float FValue;
@@ -209,7 +201,6 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 
 				in_net_ratio = in_net_ratio / NumRndNbs;
 				tri_count += in_net_ratio * (*fval);
-<<<<<<< HEAD
 
 				out_net_ratio = out_net_ratio / NumRndNbs;
 				oedge_count += out_net_ratio * (*fval);
@@ -224,58 +215,6 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 						+ ur * (tri_count / (num_edges * (num_edges - 1)));
 			}
 
-			// Updating f2, i.e. in-egonet-edge count
-			tri_count = tri_count / 2;
-			v.dataptr->fvals[2] = (1 - ur) * v.dataptr->fvals[2]
-					+ ur * tri_count;
-
-			// Updating f3, i.e. cut ratio
-			if (num_edges + tri_count + oedge_count > 0) {
-				v.dataptr->fvals[3] =
-						(1 - ur) * v.dataptr->fvals[3]
-								+ ur
-										* (oedge_count
-												/ (num_edges + tri_count
-														+ oedge_count));
-			}
-
-			// Updating f4, i.e. outside-edge count
-			v.dataptr->fvals[4] = (1 - ur) * v.dataptr->fvals[4]
-					+ ur * oedge_count;
-
-			// Propagating messages
-			for (int i = 0; i < num_edges; i++) {
-				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
-
-				vid_t *msg_nbs;
-				if (cur_edge->vertexid < v.vertexid) {
-					msg_nbs = cur_edge->data_ptr->v1_nbs;
-				} else {
-					msg_nbs = cur_edge->data_ptr->v2_nbs;
-				}
-=======
-
-				out_net_ratio = out_net_ratio / NumRndNbs;
-				oedge_count += out_net_ratio * (*fval);
-			}
-
-			// Updating ratio
-			double ur = 1.0 / ginfo.iteration;
->>>>>>> 25959add2541b6c96f051b02fab942494c59433a
-
-			// Updating f1, i.e. clustering coefficient
-			if (num_edges > 1) {
-				v.dataptr->fvals[1] = (1 - ur) * v.dataptr->fvals[1]
-						+ ur * (tri_count / (num_edges * (num_edges - 1)));
-			}
-
-<<<<<<< HEAD
-		} else if (ginfo.iteration == NumSampleRounds + 1)  {
-
-			// Rounding the features: triangle count & out-edge count
-			v.dataptr->fvals[2] = (int) (v.dataptr->fvals[2] + 0.5);
-			v.dataptr->fvals[4] = (int) (v.dataptr->fvals[4] + 0.5);
-=======
 			// Updating f2, i.e. in-egonet-edge count
 			tri_count = tri_count / 2;
 			v.dataptr->fvals[2] = (1 - ur) * v.dataptr->fvals[2]
@@ -311,16 +250,16 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 							v.edge((int) (std::abs(std::rand()) % num_edges))->vertexid;
 				}
 			}
->>>>>>> 25959add2541b6c96f051b02fab942494c59433a
+		} else if (ginfo.iteration == NumSampleRounds + 1) {
+
+			// Rounding the features: triangle count & out-edge count
+			v.dataptr->fvals[2] = (int) (v.dataptr->fvals[2] + 0.5);
+			v.dataptr->fvals[4] = (int) (v.dataptr->fvals[4] + 0.5);
 
 		} else {
 
 			// Computing recursive features
-<<<<<<< HEAD
 			if (((ginfo.iteration - NumSampleRounds) % 2) == 0) {
-=======
-			if (((ginfo.iteration - NumSampleRounds) % 2) == 1) {
->>>>>>> 25959add2541b6c96f051b02fab942494c59433a
 
 				// Propagating messages
 				for (int i = 0; i < num_edges; i++) {
