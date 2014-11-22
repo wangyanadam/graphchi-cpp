@@ -50,7 +50,10 @@ using std::clog;
  * */
 const int NumFeatures = 10;
 
-const int NumRandSample = 1000;
+/*
+ * Number of sampling rounds for computing the neighborhood features.
+ */
+const int NumSampleRounds = 1000;
 
 /*
  * Size of the random neighborhood sample.
@@ -118,7 +121,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 	 * on the received neighborhood samples from its neighbors.
 	 */
 	void update(graphchi_vertex<VertexDataType, EdgeDataType> &v,
-	graphchi_context &ginfo) {
+			graphchi_context &ginfo) {
 
 		int num_edges = v.num_edges();
 
@@ -159,7 +162,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				}
 			}
 
-		} else if (ginfo.iteration <= NumRandSample) {
+		} else if (ginfo.iteration <= NumSampleRounds) {
 
 			// Aggregating messages
 			std::set<vid_t> nb_ids;
@@ -169,7 +172,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 			nb_ids.insert(v.vertexid);
 
 			double tri_count = 0;
-			double outside_edge_count = 0;
+			double oedge_count = 0;
 			for (int i = 0; i < num_edges; i++) {
 				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
 
@@ -200,7 +203,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				tri_count += in_net_ratio * (*fval);
 
 				out_net_ratio = out_net_ratio / NumRndNbs;
-				outside_edge_count += out_net_ratio * (*fval);
+				oedge_count += out_net_ratio * (*fval);
 			}
 
 			// Updating ratio
@@ -218,34 +221,29 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 					+ ur * tri_count;
 
 			// Updating f3, i.e. cut ratio
-			if (num_edges + tri_count + outside_edge_count > 0) {
-				v.dataptr->fvals[3] = (1 - ur) * v.dataptr->fvals[3]
-						+ ur
-								* (outside_edge_count
-										/ (num_edges + tri_count
-												+ outside_edge_count));
+			if (num_edges + tri_count + oedge_count > 0) {
+				v.dataptr->fvals[3] =
+						(1 - ur) * v.dataptr->fvals[3]
+								+ ur
+										* (oedge_count
+												/ (num_edges + tri_count
+														+ oedge_count));
 			}
 
 			// Updating f4, i.e. outside-edge count
 			v.dataptr->fvals[4] = (1 - ur) * v.dataptr->fvals[4]
-					+ ur * outside_edge_count;
+					+ ur * oedge_count;
 
 			// Propagating messages
 			for (int i = 0; i < num_edges; i++) {
 				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
 
-				FValue *fval;
 				vid_t *msg_nbs;
-
 				if (cur_edge->vertexid < v.vertexid) {
-					fval = &(cur_edge->data_ptr->v1_fval);
 					msg_nbs = cur_edge->data_ptr->v1_nbs;
 				} else {
-					fval = &(cur_edge->data_ptr->v2_fval);
 					msg_nbs = cur_edge->data_ptr->v2_nbs;
 				}
-
-				*fval = num_edges;
 
 				for (int j = 0; j < NumRndNbs; j++) {
 					msg_nbs[j] =
@@ -256,7 +254,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 		} else {
 
 			// Computing recursive features
-			if (((ginfo.iteration - NumRandSample) % 2) == 1) {
+			if (((ginfo.iteration - NumSampleRounds) % 2) == 1) {
 
 				// Propagating messages
 				for (int i = 0; i < num_edges; i++) {
@@ -371,7 +369,7 @@ struct GFeatureExtractorInmem: public GraphChiProgram<VertexDataType,
 	 *  Vertex update function.
 	 */
 	void update(graphchi_vertex<VertexDataType, EdgeDataType> &vertex,
-	graphchi_context &ginfo) {
+			graphchi_context &ginfo) {
 
 		if (ginfo.iteration == 0) {
 			/* On first iteration, initialize vertex (and its edges). This is usually required, because
