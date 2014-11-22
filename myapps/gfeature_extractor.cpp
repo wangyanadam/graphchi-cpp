@@ -54,7 +54,7 @@ const int NumFeatures = 10;
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-const int NumSampleRounds = 50;
+const int NumSampleRounds = 3;
 
 /*
  * Size of the random neighborhood sample.
@@ -447,7 +447,6 @@ public:
 };
 
 int main(int argc, const char ** argv) {
-	_setmaxstdio(50000);
 
 	/* GraphChi initialization will read the command line
 	 arguments and the configuration file. */
