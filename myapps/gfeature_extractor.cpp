@@ -49,12 +49,12 @@ using std::clog;
 /*
  * Number of extracted features (>=3).
  * */
-const int NumFeatures = 20;
+const int NumFeatures = 15;
 
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-const int NumSampleRounds = 10;
+const int NumSampleRounds = 5;
 
 /*
  * Size of the random neighborhood sample.
