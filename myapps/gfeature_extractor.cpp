@@ -49,7 +49,7 @@ using std::clog;
 /*
  * Number of extracted features (>=3).
  * */
-const int NumFeatures = 10;
+const int NumFeatures = 20;
 
 /*
  * Number of sampling rounds for computing the neighborhood features.
@@ -452,7 +452,7 @@ int main(int argc, const char ** argv) {
 	 arguments and the configuration file. */
 	graphchi_init(argc, argv);
 
-// Initialize random number generator
+	// Initialize random number generator
 	std::srand(time(NULL));
 
 	/* Metrics object for keeping track of performance counters
