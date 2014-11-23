@@ -54,12 +54,12 @@ const int NumFeatures = 20;
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-const int NumSampleRounds = 3;
+const int NumSampleRounds = 10;
 
 /*
  * Size of the random neighborhood sample.
  */
-const int NumRndNbs = 10;
+const int NumRndNbs = 20;
 
 // Feature value type
 typedef float FValue;
