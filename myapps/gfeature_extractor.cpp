@@ -84,16 +84,13 @@ struct VertexDataType {
 // Edge Data Type
 struct EdgeDataType {
 	FValue v1_fval;
-	int v1_fid;
-
 	FValue v2_fval;
-	int v2_fid;
 
 	vid_t v1_nbs[NumRndNbs];
 	vid_t v2_nbs[NumRndNbs];
 
 	EdgeDataType() :
-			v1_fval(-1), v1_fid(-1), v2_fval(-1), v2_fid(-1), v1_nbs { 0 }, v2_nbs {
+			v1_fval(-1), v2_fval(-1), v1_nbs { 0 }, v2_nbs {
 					0 } {
 	}
 };
@@ -140,21 +137,15 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 			for (int i = 0; i < num_edges; i++) {
 				graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
 
-				int *fid;
 				FValue *fval;
 				vid_t *msg_nbs;
-
 				if (cur_edge->vertexid < v.vertexid) {
-					fid = &(cur_edge->data_ptr->v1_fid);
 					fval = &(cur_edge->data_ptr->v1_fval);
 					msg_nbs = cur_edge->data_ptr->v1_nbs;
 				} else {
-					fid = &(cur_edge->data_ptr->v2_fid);
 					fval = &(cur_edge->data_ptr->v2_fval);
 					msg_nbs = cur_edge->data_ptr->v2_nbs;
 				}
-
-				*fid = 0;
 				*fval = num_edges;
 
 				for (int j = 0; j < NumRndNbs; j++) {
@@ -266,19 +257,14 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				for (int i = 0; i < num_edges; i++) {
 					graphchi_edge<EdgeDataType> *cur_edge = v.edge(i);
 
-					int *fid;
 					FValue *fval;
-
 					if (cur_edge->vertexid < v.vertexid) {
-						fid = &(cur_edge->data_ptr->v1_fid);
 						fval = &(cur_edge->data_ptr->v1_fval);
 					} else {
-						fid = &(cur_edge->data_ptr->v2_fid);
 						fval = &(cur_edge->data_ptr->v2_fval);
 					}
 
-					*fid = v.dataptr->pass_fid;
-					*fval = v.dataptr->fvals[*fid];
+					*fval = v.dataptr->fvals[v.dataptr->pass_fid];
 				}
 
 				v.dataptr->pass_fid++;
