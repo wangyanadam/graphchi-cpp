@@ -54,7 +54,7 @@ const int NumFeatures = 15;
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-const int NumSampleRounds = 5;
+const int NumSampleRounds = 3;
 
 /*
  * Size of the random neighborhood sample.
@@ -62,7 +62,7 @@ const int NumSampleRounds = 5;
 const int NumRndNbs = 20;
 
 // Feature value type
-typedef float FValue;
+typedef double FValue;
 
 // Vertex Data Type
 struct VertexDataType {
@@ -295,7 +295,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 					vf = vf / num_edges - mf * mf;
 
 					// According to the definition of empirical standard deviation
-					if (vf != 0) {
+					if (num_edges > 1) {
 						vf = vf * num_edges / (num_edges - 1);
 					}
 
