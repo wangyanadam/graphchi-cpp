@@ -451,6 +451,7 @@ int main(int argc, const char ** argv) {
 	int niters = get_option_int("niters", 1); // Number of iterations
 	bool scheduler = get_option_int("scheduler", 0); // Whether to use selective schedulig
 	bool rand_par = get_option_int("random_parallel", 0); // Whether to use deterministic parallelism
+	bool save_edg = get_option_int("save_edge", 0); // Whether to save edges after inmemo computation
 
 	/* Detect the number of shards or preprocess an input to create them */
 	int nshards = convert_if_notexists<EdgeDataType>(infilename,
@@ -462,7 +463,7 @@ int main(int argc, const char ** argv) {
 
 	engine.set_modifies_outedges(false);
 	engine.set_modifies_inedges(false);
-	engine.set_save_edgesfiles_after_inmemmode(true);
+	engine.set_save_edgesfiles_after_inmemmode(save_edg);
 	engine.set_enable_deterministic_parallelism(!rand_par);
 
 	GFeatureExtractor program;
