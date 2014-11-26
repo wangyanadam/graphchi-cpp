@@ -197,34 +197,38 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				out_net_ratio = out_net_ratio / NumRndNbs;
 				oedge_count += out_net_ratio * (*fval);
 			}
-
-			// Updating ratio
-			double ur = 1.0 / ginfo.iteration;
-
-			// Updating f1, i.e. clustering coefficient
-			if (num_edges > 1) {
-				v.dataptr->fvals[1] = (1 - ur) * v.dataptr->fvals[1]
-						+ ur * (tri_count / (num_edges * (num_edges - 1)));
-			}
-
-			// Updating f2, i.e. in-egonet-edge count
 			tri_count = tri_count / 2;
-			v.dataptr->fvals[2] = (1 - ur) * v.dataptr->fvals[2]
-					+ ur * tri_count;
 
-			// Updating f3, i.e. cut ratio
-			if (num_edges + tri_count + oedge_count > 0) {
-				v.dataptr->fvals[3] =
-						(1 - ur) * v.dataptr->fvals[3]
-								+ ur
-										* (oedge_count
-												/ (num_edges + tri_count
-														+ oedge_count));
+			// New feature values
+			double nfval1 = 0;
+		        double nfval2 = 0;
+		        double nfval3 = 0;
+		        double nfval4 = 0;
+			if (num_edges > 1) {
+				nfval1 = (tri_count / (num_edges * (num_edges - 1) / 2));
 			}
+			nfval2 = tri_count;
+			if (num_edges + tri_count + oedge_count > 0) {
+				nfval3 = (oedge_count / (num_edges + tri_count + oedge_count));
+			}
+			nfval4 = oedge_count;
 
-			// Updating f4, i.e. outside-edge count
-			v.dataptr->fvals[4] = (1 - ur) * v.dataptr->fvals[4]
-					+ ur * oedge_count;
+			if (ginfo.iteration == 1) {
+				v.dataptr->fvals[1] = nfval1;
+				v.dataptr->fvals[2] = nfval2;
+				v.dataptr->fvals[3] = nfval3;
+				v.dataptr->fvals[4] = nfval4;
+			}
+			else {
+
+				// Updating ratio
+				double ur = 1.0 / ginfo.iteration;
+
+				v.dataptr->fvals[1] = (1 - ur) * v.dataptr->fvals[1] + ur * nfval1;
+				v.dataptr->fvals[2] = (1 - ur) * v.dataptr->fvals[2] + ur * nfval2;
+				v.dataptr->fvals[3] = (1 - ur) * v.dataptr->fvals[3] + ur * nfval3;
+				v.dataptr->fvals[4] = (1 - ur) * v.dataptr->fvals[4] + ur * nfval4;
+			}
 
 			// Propagating messages
 			for (int i = 0; i < num_edges; i++) {
