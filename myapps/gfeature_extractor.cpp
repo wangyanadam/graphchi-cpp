@@ -131,7 +131,7 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 				v.dataptr->fvals[i] = 0;
 			}
 			v.dataptr->pass_fid = 0;
-			v.dataptr->fill_fid = 4;
+			v.dataptr->fill_fid = 2;
 
 			// Init edge data
 			for (int i = 0; i < num_edges; i++) {
@@ -202,22 +202,17 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 			// New feature values
 			double nfval1 = 0;
 		        double nfval2 = 0;
-		        double nfval3 = 0;
-		        double nfval4 = 0;
+
 			if (num_edges > 1) {
 				nfval1 = (tri_count / (num_edges * (num_edges - 1) / 2));
 			}
-			nfval2 = tri_count;
 			if (num_edges + tri_count + oedge_count > 0) {
-				nfval3 = (oedge_count / (num_edges + tri_count + oedge_count));
+				nfval2 = (oedge_count / (num_edges + tri_count + oedge_count));
 			}
-			nfval4 = oedge_count;
 
 			if (ginfo.iteration == 1) {
 				v.dataptr->fvals[1] = nfval1;
 				v.dataptr->fvals[2] = nfval2;
-				v.dataptr->fvals[3] = nfval3;
-				v.dataptr->fvals[4] = nfval4;
 			}
 			else {
 
@@ -226,8 +221,6 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 
 				v.dataptr->fvals[1] = (1 - ur) * v.dataptr->fvals[1] + ur * nfval1;
 				v.dataptr->fvals[2] = (1 - ur) * v.dataptr->fvals[2] + ur * nfval2;
-				v.dataptr->fvals[3] = (1 - ur) * v.dataptr->fvals[3] + ur * nfval3;
-				v.dataptr->fvals[4] = (1 - ur) * v.dataptr->fvals[4] + ur * nfval4;
 			}
 
 			// Propagating messages
@@ -246,16 +239,11 @@ struct GFeatureExtractor: public GraphChiProgram<VertexDataType, EdgeDataType> {
 							v.edge((int) (std::abs(std::rand()) % num_edges))->vertexid;
 				}
 			}
-		} else if (ginfo.iteration == NumSampleRounds + 1) {
-
-			// Rounding the features: triangle count & out-edge count
-			v.dataptr->fvals[2] = (int) (v.dataptr->fvals[2] + 0.5);
-			v.dataptr->fvals[4] = (int) (v.dataptr->fvals[4] + 0.5);
-
+			
 		} else {
 
 			// Computing recursive features
-			if (((ginfo.iteration - NumSampleRounds) % 2) == 0) {
+			if (((ginfo.iteration - NumSampleRounds) % 2) == 1) {
 
 				// Propagating messages
 				for (int i = 0; i < num_edges; i++) {
