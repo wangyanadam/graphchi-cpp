@@ -224,9 +224,9 @@ int main(int argc,  const char *argv[]) {
 		N = M;
 	else N = string2nodeid2.size();
 
-	save_map_to_text_file(string2nodeid, outdir + "-map");
+	save_map_to_text_file(string2nodeid, outdir + ".user.map");
 	if (!single_domain){
-		save_map_to_text_file(string2nodeid2, outdir + dir + "movie.map.text");
+		save_map_to_text_file(string2nodeid2, outdir + ".item.map");
 	}
 	std::string filename = "matrix_market.info";
 	if (in_files.size() == 1)
