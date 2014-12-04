@@ -49,20 +49,22 @@ using std::clog;
 /*
  * Number of extracted features (>=3).
  * */
-const int NumFeatures = 15;
+const int NumFeatures = 20;
 
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-const int NumSampleRounds = 3;
+const int NumSampleRounds = 5;
 
 /*
  * Size of the random neighborhood sample.
  */
 const int NumRndNbs = 20;
 
-// Feature value type
-typedef double FValue;
+/*
+ * Type of the feature values
+ */
+typedef float FValue;
 
 // Vertex Data Type
 struct VertexDataType {
@@ -414,11 +416,22 @@ struct GFeatureExtractorInmem: public GraphChiProgram<VertexDataType,
 /* class for output the feature values for each node (optional) */
 class OutputVertexCallback: public VCallback<VertexDataType> {
 public:
+	bool output_tsv = true;
+
+	OutputVertexCallback(bool ot): VCallback<VertexDataType>(), output_tsv(ot) {}
+
 	/* print node id and then the feature values */
 	virtual void callback(vid_t vertex_id, VertexDataType &value) {
 		fprintf(outfile, "%u", vertex_id);
-		for (int i = 0; i < NumFeatures; i++) {
-			fprintf(outfile, "\t%f", value.fvals[i]);
+		if (output_tsv) {
+			for (int i = 0; i < NumFeatures; i++) {
+				fprintf(outfile, "\t%f", value.fvals[i]);
+			}
+		}
+		else {
+			for (int i = 0; i < NumFeatures; i++) {
+		                fprintf(outfile, ",%f", value.fvals[i]);
+		        }
 		}
 		fprintf(outfile, "\n");
 	}
@@ -444,6 +457,7 @@ int main(int argc, const char ** argv) {
 	bool scheduler = get_option_int("scheduler", 0); // Whether to use selective schedulig
 	bool rand_par = get_option_int("random_parallel", 0); // Whether to use deterministic parallelism
 	bool save_edg = get_option_int("save_edge", 0); // Whether to save edges after inmemo computation
+	bool output_tsv = get_option_int("output_tsv", 1); // Whether to output a tsv file or a csv file
 
 	/* Detect the number of shards or preprocess an input to create them */
 	int nshards = convert_if_notexists<EdgeDataType>(infilename,
@@ -481,7 +495,7 @@ int main(int argc, const char ** argv) {
 		logstream(LOG_FATAL) << "Failed to open file: " << outfilename
 				<< std::endl;
 
-	OutputVertexCallback callback;
+	OutputVertexCallback callback(output_tsv);
 	foreach_vertices<VertexDataType>(infilename, 1, engine.num_vertices(),
 			callback);
 	fclose(outfile);
