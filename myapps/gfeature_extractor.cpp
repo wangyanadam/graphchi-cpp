@@ -59,7 +59,7 @@ const int NumSampleRounds = 5;
 /*
  * Size of the random neighborhood sample.
  */
-const int NumRndNbs = 20;
+const int NumRndNbs = 30;
 
 /*
  * Type of the feature values
