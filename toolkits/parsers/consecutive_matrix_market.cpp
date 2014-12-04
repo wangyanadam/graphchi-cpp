@@ -88,7 +88,7 @@ void assign_id(map<string,uint> & string2nodeid, uint & outval, const string &na
 
 void parse(int i){    
 	in_file fin(in_files[i]);
-	out_file fout((outdir + in_files[i] + ".out"));
+	out_file fout((outdir + ".out"));
 
 	size_t linesize = 0;
 	char * saveptr = NULL, * linebuf = NULL;
@@ -174,6 +174,7 @@ int main(int argc,  const char *argv[]) {
 	graphchi_init(argc, argv);
 	mytimer.start();
 
+	outdir = get_option_string("output","");
 	debug = get_option_int("debug", 0);
 	dir = get_option_string("file_list","");
 	filename = get_option_string("training","");
@@ -223,7 +224,7 @@ int main(int argc,  const char *argv[]) {
 		N = M;
 	else N = string2nodeid2.size();
 
-	save_map_to_text_file(string2nodeid, outdir + dir + "user.map.text");
+	save_map_to_text_file(string2nodeid, outdir + "-map");
 	if (!single_domain){
 		save_map_to_text_file(string2nodeid2, outdir + dir + "movie.map.text");
 	}
