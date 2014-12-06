@@ -92,8 +92,7 @@ struct EdgeDataType {
 	vid_t v2_nbs[NumRndNbs];
 
 	EdgeDataType() :
-			v1_fval(-1), v2_fval(-1), v1_nbs { 0 }, v2_nbs {
-					0 } {
+			v1_fval(0), v2_fval(0), v1_nbs { 0 }, v2_nbs { 0 } {
 	}
 };
 
