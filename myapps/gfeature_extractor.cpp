@@ -29,6 +29,8 @@
  * computing recursive features based on the neighborhood features.
  */
 
+#define GRAPHCHI_DISABLE_COMPRESSION
+
 #include <string>
 #include <set>
 #include <iostream>
