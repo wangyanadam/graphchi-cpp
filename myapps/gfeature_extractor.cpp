@@ -56,7 +56,7 @@ const int NumFeatures = 20;
 /*
  * Number of sampling rounds for computing the neighborhood features.
  */
-const int NumSampleRounds = 5;
+const int NumSampleRounds = 3;
 
 /*
  * Size of the random neighborhood sample.
